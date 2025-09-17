@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React新闻卡片模板 - 动态数据版本</title>
+    <!-- 引入React和ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- 引入Babel用于JSX转换 -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* CSS变量系统 - 动态参数控制 */
+        :root {
+            /* 亮色模式 */
+            --text-primary: #262626;
+            --text-secondary: #8c8c8c;
+            --border-color: #f0f0f0;
+            --bg-color: #ffffff;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --spacing: 16px;
+            --img-bg-color: #eee; 
+            --hover-bg-color: #fafafa;
+            --star-color: #faad14;
+            --mask-color: rgba(0, 0, 0, 0.7);
+            --mask-text-color: #fff;
+            --star-gray-color: #ddd;
+            --video-play-icon-color: #fff;
+            --video-play-icon-bg-color: rgba(0, 0, 0, 0.5);
+           
+
+            /* 暗色模式 */
+            /* --text-primary: #fff;
+            --text-secondary: #ccc;
+            --border-color: #222;
+            --bg-color: #111;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --spacing: 16px;
+            --img-bg-color: #333;
+            --hover-bg-color: #222;
+            --star-color: #ffd700;
+            --mask-color: rgba(0, 0, 0, 0.7);
+            --star-gray-color: #444;
+            --video-play-icon-color: #fff;
+            --video-play-icon-bg-color: rgba(0, 0, 0, 0.7); */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .app {
+            width: 700px;
+            padding: 0;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .news-card {
+            background: var(--bg-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        /* 单图新闻Item样式 */
+        .news-item {
+            display: flex;
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .news-item:hover {
+            background-color: var(--hover-bg-color);
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-thumbnail {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-right: var(--spacing);
+            flex-shrink: 0;
+            background-color: var(--img-bg-color);
+        }
+
+        .news-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .news-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: -webkit-box;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-meta {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .time {
+            margin-right: 12px;
+        }
+
+        /* 新闻Banner样式 */
+        .banner-item {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            cursor: pointer;
+            margin: 0 20px;
+            border-radius: 10px;
+        }
+
+        .banner-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: var(--img-bg-color);
+        }
+
+        .banner-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, var(--mask-color));
+            color: var(--mask-text-color);
+            padding: 20px;
+        }
+
+        .banner-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .banner-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        /* 视频Banner样式 */
+        .video-banner-item {
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .video-banner-cover {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            position: relative;
+            background-color: var(--img-bg-color);
+        }
+
+        .video-play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: var(--video-play-icon-bg-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--video-play-icon-color);
+            font-size: 24px;
+        }
+
+        .video-banner-title {
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        /* 视频Item样式 */
+        .video-item {
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+        }
+
+        .video-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .video-cover {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            position: relative;
+            background-color: var(--img-bg-color);
+        }
+
+        .video-item-title {
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        /* 移动端视频Item样式 */
+        .movie-video-item {
+            display: flex;
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .movie-video-item:hover {
+            background-color: var(--hover-bg-color);
+        }
+
+        .movie-video-cover {
+            width: 160px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-right: var(--spacing);
+            flex-shrink: 0;
+            background-color: var(--img-bg-color);
+        }
+
+        .movie-video-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .movie-video-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+            display: -webkit-box;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .movie-video-tag {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .movie-video-tag::before {
+            content: "🏷️";
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        .movie-video-tag .year-separator {
+            margin: 0 8px;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .movie-video-rating-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .movie-video-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .movie-video-rating .star {
+            font-size: 18px;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+
+        .movie-video-rating .star.filled {
+            color: var(--star-color);
+        }
+
+        .movie-video-rating .star.half {
+            background: linear-gradient(90deg, var(--star-color) 50%, var(--star-gray-color) 50%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .movie-video-rating .rating-text {
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .movie-video-meta {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .movie-video-meta::before {
+            content: "📅";
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        .movie-video-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .star {
+            color: var(--star-color);
+            margin-right: 2px;
+        }
+
+        /* 三图新闻样式 */
+        .image-item {
+            padding: var(--spacing);
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .image-item:hover {
+            background-color: var(--hover-bg-color);
+        }
+
+        .image-item-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .image-item-images {
+            display: flex;
+            gap: 8px;
+            border-radius: 6px;
+        }
+
+        .image-item-images.three-equal img {
+            flex: 1;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            background-color: var(--img-bg-color);
+        }
+
+        .image-item-images.left-large {
+            gap: 8px;
+        }
+
+        .image-item-images.left-large .large-image {
+            flex: 2;
+            height: 208px;
+            object-fit: cover;
+            border-radius: 6px;
+            background-color: var(--img-bg-color);
+        }
+
+        .image-item-images.left-large .small-images {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .image-item-images.left-large .small-images img {
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            background-color: var(--img-bg-color);
+        }
+
+        /* 评论Item样式 */
+        .comment-item {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .comment-item:hover {
+            background-color: var(--hover-bg-color);
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+            background-color: var(--img-bg-color);
+        }
+
+        .comment-user-info {
+            flex: 1;
+        }
+
+        .comment-username {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .comment-content {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-left: 44px;
+        }
+
+        /* 加载状态样式 */
+        .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        // 单图新闻Item(左边图片，右边上下结构，标题+描述)
+        const NewsItemWithOnePic = ({ news, index }) => {
+            return (
+                <div className="news-item">
+                    <img className="news-thumbnail" src={news.picUrl} alt={news.newsTitle} />
+                    <div className="news-content">
+                        <div className="news-title">{news.newsTitle}</div>
+                        <div className="news-meta">
+                            <span className="time">{news.pubTime}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        //新闻bannerItem（大图+图底部标题+描述）
+        const NewsBannerItem = ({ item }) => {
+            return (
+                <div className="banner-item">
+                    <img className="banner-image" src={item.picUrl} alt={item.newsTitle} />
+                    <div className="banner-overlay">
+                        <div className="banner-title">{item.newsTitle}</div>
+                        <div className="banner-desc">{item.description || '点击查看详情'}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        //视频bannerItem（上封面,封面为宽度占满，下标题）
+        const VideoBannerItem = ({ item }) => {
+            return (
+                <div className="video-banner-item">
+                    <div style={{ position: 'relative' }}>
+                        <img className="video-banner-cover" src={item.picUrl} alt={item.newsTitle} />
+                        <div className="video-play-icon">▶</div>
+                    </div>
+                    <div className="video-banner-title">{item.newsTitle}</div>
+                </div>
+            );
+        };
+
+        //视频Item（上封面，封面为宽度为1/3，下标题）
+        const VideoNewsItem = ({ item }) => {
+            return (
+                <div className="video-item">
+                    <div style={{ position: 'relative' }}>
+                        <img className="video-cover" src={item.picUrl} alt={item.newsTitle} />
+                        <div className="video-play-icon" style={{ width: '40px', height: '40px', fontSize: '16px' }}>▶</div>
+                    </div>
+                    <div className="video-item-title">{item.newsTitle}</div>
+                </div>
+            );
+        };
+
+        //电影或唱片Item（左封面，右边为标题+描述+评分等信息）
+        const MovieVideoNewsItem = ({ item }) => {
+            // 根据评分计算星星显示状态（5分制）
+            const renderStars = (rating) => {
+                const stars = [];
+                const fullStars = Math.floor(rating);
+                const hasHalfStar = rating % 1 !== 0;
+                
+                // 渲染完整的星星
+                for (let i = 0; i < fullStars; i++) {
+                    stars.push(<span key={`full-${i}`} className="star filled">★</span>);
+                }
+                
+                // 渲染半星（如果有）
+                if (hasHalfStar) {
+                    stars.push(<span key="half" className="star half">★</span>);
+                }
+                
+                // 渲染空星星
+                const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                for (let i = 0; i < emptyStars; i++) {
+                    stars.push(<span key={`empty-${i}`} className="star">★</span>);
+                }
+                
+                return stars;
+            };
+
+            return (
+                <div className="movie-video-item">
+                    <img
+                        className="movie-video-cover"
+                        src={item.picUrl}
+                        alt={item.newsTitle}
+                    />
+                    <div className="movie-video-content">
+                        <div className="movie-video-content-top">
+                            <div className="movie-video-title">{item.newsTitle}</div>
+                            <div className="movie-video-tag">
+                                {item.tag}
+                                <span className="year-separator">•</span>
+                                {item.pubTime}
+                            </div>
+                            <div className="movie-video-rating-section">
+                                <div className="movie-video-rating">
+                                    {renderStars(parseFloat(item.rating))}
+                                    <span className="rating-text">{item.rating}/5</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="movie-video-desc">{item.description}</div>
+                        
+                    </div>
+                </div>
+            );
+        };
+
+        //图片新闻Item(上标题，下三图 ，三图布局为1/3宽度或者左为大图2/3，右两小图上下布局)
+        const NewsItemWithThreePic = ({ item, layout = 'three-equal' }) => {
+            return (
+                <div className="image-item">
+                    <div className="image-item-title">{item.newsTitle}</div>
+                    <div className={`image-item-images ${layout}`}>
+                        {layout === 'three-equal' ? (
+                            <>
+                                <img src={item.picUrl1} alt="图片1" />
+                                <img src={item.picUrl2} alt="图片2" />
+                                <img src={item.picUrl3} alt="图片3" />
+                            </>
+                        ) : (
+                            <>
+                                <img className="large-image" src={item.picUrl1} alt="主图" />
+                                <div className="small-images">
+                                    <img src={item.picUrl2} alt="图片2" />
+                                    <img src={item.picUrl3} alt="图片3" />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        //评论Item
+        const CommentItem = ({ item }) => {
+            return (
+                <div className="comment-item">
+                    <div className="comment-header">
+                        <img className="comment-avatar" src={item.avatarUrl} alt="用户头像" />
+                        <div className="comment-user-info">
+                            <div className="comment-username">{item.username}</div>
+                            <div className="comment-time">{item.commentTime}</div>
+                        </div>
+                    </div>
+                    <div className="comment-content">{item.commentContent}</div>
+                </div>
+            );
+        };
+
+        const HeaderTitle = ({ title }) => {
+            return (
+                <div className="header-title">
+                    {title}
+                </div>
+            );
+        };
+        // 主新闻卡片组件
+        const NewsCard = () => {
+            // 写死的数据用于展示UI效果
+            const [mockData, setMockData] = React.useState({
+                cardTitle: "Widget卡片标题",
+                bannerData: {
+                    picUrl: "https://picsum.photos/600/300?random=100",
+                    newsTitle: "今日热点资讯",
+                    description: "汇聚最新、最热、最有价值的信息"
+                },
+                // 新闻热点数据
+                hotNews: [
+                    {
+                        picUrl1: "https://picsum.photos/300/200?random=1",
+                        picUrl2: "https://picsum.photos/300/200?random=2", 
+                        picUrl3: "https://picsum.photos/300/200?random=3",
+                        newsTitle: "重大突破！人工智能在医疗领域取得新进展",
+                        pubTime: "2024-01-15 10:30"
+                    },
+                    {
+                        picUrl1: "https://picsum.photos/300/200?random=4",
+                        picUrl2: "https://picsum.photos/300/200?random=5",
+                        picUrl3: "https://picsum.photos/300/200?random=6", 
+                        newsTitle: "全球气候变化：各国采取行动应对环境挑战",
+                        pubTime: "2024-01-15 09:15"
+                    },
+                    {
+                        picUrl1: "https://picsum.photos/300/200?random=7",
+                        picUrl2: "https://picsum.photos/300/200?random=8",
+                        picUrl3: "https://picsum.photos/300/200?random=9",
+                        newsTitle: "科技创新：新型可再生能源技术问世",
+                        pubTime: "2024-01-15 08:45"
+                    }
+                ],
+                
+                // 电影合集数据
+                movieCollection: [
+                    {
+                        picUrl: "https://picsum.photos/300/400?random=10",
+                        newsTitle: "星际穿越",
+                        tag: "科幻 剧情 悬疑",
+                        pubTime: "2024-01-15",
+                        rating: "4.7",
+                        description: "诺兰导演的科幻经典之作,豆瓣评分9.3"
+                    },
+                    {
+                        picUrl: "https://picsum.photos/300/400?random=11", 
+                        newsTitle: "盗梦空间",
+                        tag: "科幻 剧情 悬疑",
+                        pubTime: "2024-01-14",
+                        rating: "4.5",
+                        description: "梦境与现实的边界探索,豆瓣评分9.0"
+                    },
+                    {
+                        picUrl: "https://picsum.photos/300/400?random=12",
+                        newsTitle: "泰坦尼克号",
+                        tag: "爱情 剧情 经典",
+                        pubTime: "2024-01-13", 
+                        rating: "4.8",
+                        description: "永恒的经典爱情故事,豆瓣评分9.4"
+                    }
+                ],
+                
+                // 精彩评论数据
+                hotComments: [
+                    {
+                        avatarUrl: "https://picsum.photos/50/50?random=13",
+                        username: "科技爱好者",
+                        commentTime: "2小时前",
+                        commentContent: "这篇文章写得非常深入，对AI在医疗领域的应用分析得很透彻，期待看到更多相关报道！"
+                    },
+                    {
+                        avatarUrl: "https://picsum.photos/50/50?random=14",
+                        username: "环保达人",
+                        commentTime: "3小时前", 
+                        commentContent: "气候变化确实是我们这个时代最大的挑战，希望各国能够真正行动起来，保护我们的地球。"
+                    },
+                    {
+                        avatarUrl: "https://picsum.photos/50/50?random=15",
+                        username: "电影迷",
+                        commentTime: "5小时前",
+                        commentContent: "这部电影的视觉效果太震撼了，剧情也很紧凑，强烈推荐大家去看！"
+                    }
+                ],
+                
+                // 视频推荐数据
+                videoRecommendations: [
+                    {
+                        picUrl: "https://picsum.photos/400/225?random=16",
+                        newsTitle: "2024年科技趋势预测：AI、量子计算、元宇宙"
+                    },
+                    {
+                        picUrl: "https://picsum.photos/400/225?random=17",
+                        newsTitle: "美食制作教程：米其林三星主厨教你做经典法餐"
+                    },
+                    {
+                        picUrl: "https://picsum.photos/400/225?random=18",
+                        newsTitle: "旅行vlog：探索神秘的亚马逊雨林深处"
+                    }
+                ],
+                
+                // 热门话题数据
+                trendingTopics: [
+                    {
+                        picUrl: "https://picsum.photos/300/200?random=19",
+                        newsTitle: "元宇宙概念持续升温，各大科技公司纷纷布局",
+                        pubTime: "2024-01-15 11:00"
+                    },
+                    {
+                        picUrl: "https://picsum.photos/300/200?random=20",
+                        newsTitle: "新能源汽车销量创新高，传统车企加速转型",
+                        pubTime: "2024-01-15 10:45"
+                    }
+                ]
+            });
+
+            // 获取新闻数据的函数
+            const fetchNewsData = async () => {
+                try {
+                    // 这里可以替换为你的实际API接口
+                    // 示例：从新闻API获取数据
+                    const response = await fetch('https://plugin-test.aijidou.com/plugin/widget/testNews', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // 将接口数据转换为组件需要的格式
+                    if (data && data.data) {
+                        const apiData = data.data;
+                        
+                        // 更新mockData，保持原有结构，只替换数据内容
+                        setMockData(prevData => ({
+                            ...prevData,
+                            cardTitle: prevData.cardTitle,
+                            bannerData: {
+                                picUrl: apiData.coverurl || prevData.bannerData.picUrl,
+                                newsTitle: apiData.title || prevData.bannerData.newsTitle,
+                                description: apiData.subtitle || prevData.bannerData.description
+                            },
+                            hotNews: apiData.hotNews || apiData.infolist || prevData.hotNews,
+                            movieCollection: apiData.movieCollection || prevData.movieCollection,
+                            hotComments: apiData.hotComments || prevData.hotComments,
+                            videoRecommendations: apiData.videoRecommendations || prevData.videoRecommendations,
+                            trendingTopics: apiData.trendingTopics || prevData.trendingTopics
+                        }));
+                    }
+                } catch (err) {
+                    console.error('获取新闻数据失败:', err);
+                    // 保持原有数据，不显示错误
+                }
+            };
+
+            // 组件挂载时获取数据
+            React.useEffect(() => {
+                fetchNewsData();
+            }, []);
+
+            return (
+                <div className="news-card">
+                    {/* 头部标题区域 */}
+                    <HeaderTitle title={mockData.cardTitle} />
+                    
+                    {/* 封面Banner */}
+                    <NewsBannerItem item={mockData.bannerData} />
+                    
+                    {/* 新闻热点分区 */}
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                            🔥 新闻热点
+                        </h3>
+                        {mockData.hotNews.map((news, index) => (
+                            index % 2 === 0 ? (
+                                <NewsItemWithThreePic key={index} item={news} layout="left-large" />
+                            ) : (
+                                <NewsItemWithThreePic key={index} item={news} layout="three-equal" />
+                            )
+                        ))}
+                    </div>
+                    
+                    {/* 电影合集分区 */}
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                            🎬 电影合集
+                        </h3>
+                        {mockData.movieCollection.map((movie, index) => (
+                            <MovieVideoNewsItem key={index} item={movie} />
+                        ))}
+                    </div>
+                    
+                    {/* 视频推荐分区 */}
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                            📹 视频推荐
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(25%, 1fr))', gap: '16px' }}>
+                            {mockData.videoRecommendations.map((video, index) => (
+                                <VideoBannerItem key={index} item={video} />
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* 热门话题分区 */}
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                            💬 热门话题
+                        </h3>
+                        {mockData.trendingTopics.map((topic, index) => (
+                            <NewsItemWithOnePic key={index} news={topic} index={index} />
+                        ))}
+                    </div>
+                    
+                    {/* 精彩评论分区 */}
+                    <div style={{ padding: '20px' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                            💭 精彩评论
+                        </h3>
+                        {mockData.hotComments.map((comment, index) => (
+                            <CommentItem key={index} item={comment} />
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+
+        // 主应用组件
+        const App = () => {
+
+
+            return (
+                <div className="app">
+                    <NewsCard />
+                </div>
+            );
+        };
+
+        // 渲染应用
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
